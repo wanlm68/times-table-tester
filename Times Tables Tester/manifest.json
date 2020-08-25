@@ -1,0 +1,10 @@
+{
+  "name": "Times Tables Test",
+  "description": "Practice Your Math Times Tables",
+  "version": "1.0",
+  "manifest_version": 2,
+  "browser_action": {
+    "default_popup": "index.html",
+    "default_icon": "images/icon.png"
+  }
+}
