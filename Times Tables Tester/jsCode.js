@@ -1,24 +1,26 @@
 // ***** JavaScript Code *****
 
 // Declare Global variables
-var tableNumber = 99;
-var score = 0;
-var attempts = 0;
-var state = true;
-var firstNum = 89;
-var time = 60;
-var gameRunning = true;
-var quit = false;
-var isTimedGame = false;
-var timer;
-var timer2;
-var animTimer;
-var num = 0;
-var isRandomTables = false;
-var previousRandomNumber = 0;
+let tableNumber = 99;
+let score = 0;
+let attempts = 0;
+let state = true;
+let firstNum = 89;
+let time = 180;
+let gameRunning = true;
+let quit = false;
+let isTimedGame = false;
+let timer;
+let timer2;
+let animTimer;
+let num = 0;
+let isRandomTables = false;
+let previousRandomNumber = 0;
+let db = null;
 
 // DOM Elements
 const gameHeader = document.querySelector("#gameHeader");
+const showSavedResults = document.querySelector("#showSavedResults");
 const timerDisplay = document.querySelector("#timerDisplay");
 const scoreDisplay = document.querySelector("#score");
 const userTries = document.querySelector("#attempts");
@@ -31,6 +33,7 @@ const defaultGame = document.querySelector("#defaultTest");
 const numSelect = document.querySelector("#numSelect");
 const numberChoiceScreen = document.querySelector("#chooseNumber");
 const backToMenuBtn = document.querySelectorAll(".backToMenuBtn");
+const resultTextArea = document.querySelector("#textAreaResults");
 const resultMessage = document.querySelector("#result");
 
 // created elements
@@ -88,14 +91,119 @@ startButton.addEventListener("click", function() {
   if (isTimedGame) timeLimitTest();
 });
 
+showSavedResults.addEventListener("click", function() {
+  if (resultTextArea.style.display === "block") {
+    resultTextArea.style.display = "none";
+  } else {
+    resultTextArea.style.display = "block";
+  }
+  get_record();
+});
+
+// *************************************************
+// **************** PROGRAM START ******************
+// *************************************************
+createDB();
+
 // *************************************************
 // **************** FUNCTIONS **********************
 // *************************************************
 
+function createDB() {
+  let request = indexedDB.open("TimesTableDB");
+  request.onerror = function(event) {
+    console.log("Problem opening database");
+  };
+
+  request.onupgradeneeded = function(event) {
+    db = event.target.result;
+    let scoreObjectStore = db.createObjectStore("gameResults", {
+      keyPath: "datetime"
+    });
+    scoreObjectStore.transaction.oncomplete = function(event) {
+      console.log("scoreObjectStore Created");
+    };
+  };
+
+  request.onsuccess = function(event) {
+    db = event.target.result;
+    console.log("DB Opened");
+    //insert_records(score);
+    db.onerror = function(event) {
+      console.log("Failed to open db");
+    };
+  };
+}
+
+// **********************************************************************************************************
+
+function insert_records(records) {
+  if (db) {
+    const insert_transaction = db.transaction("gameResults", "readwrite");
+    const scoreObjectStore = insert_transaction.objectStore("gameResults");
+    insert_transaction.oncomplete = function() {
+      console.log("ALL INSERT TRANSACTIONS COMPLETE.");
+    };
+    insert_transaction.onerror = function() {
+      console.log("PROBLEM INSERTING RECORDS.");
+    };
+    for (const gameScore of records) {
+      let request = scoreObjectStore.add(gameScore);
+      request.onsuccess = function() {
+        console.log("Added: ", gameScore);
+      };
+    }
+  }
+}
+
+//****************************************************************************************
+
+function get_record() {
+  if (db) {
+    const get_transaction = db.transaction("gameResults", "readonly");
+    const objectStore = get_transaction.objectStore("gameResults");
+    get_transaction.oncomplete = function() {
+      console.log("ALL GET TRANSACTIONS COMPLETE.");
+    };
+    get_transaction.onerror = function() {
+      console.log("PROBLEM GETTING RECORDS.");
+    };
+
+    let request = objectStore.getAll();
+    request.onsuccess = function(event) {
+      // Call function which displays results in textarea
+      displayResults(event.target.result);
+    };
+  }
+}
+
+// ***************************************************************************************
+
+function displayResults(results) {
+  resultTextArea.innerHTML = "";
+  results.forEach(function(item) {
+    let oldResult = resultTextArea.innerHTML;
+    resultTextArea.innerHTML =
+      oldResult +
+      JSON.stringify(item.datetime) +
+      " : " +
+      JSON.stringify(item.answered) +
+      " : " +
+      JSON.stringify(item.correct) +
+      " : " +
+      JSON.stringify(item.wrong) +
+      " : " +
+      JSON.stringify(item.percent) +
+      " : " +
+      JSON.stringify(item.table) +
+      "\n";
+  });
+}
+
+// ***************************************************************************************
+
 function calcAnswer() {
   var userAnswer = userAnswerTextBox.value;
-
-  console.log(userAnswer);
 
   if (userAnswer !== "") {
     var convertedUserAnswer = parseInt(userAnswer);
@@ -120,6 +228,8 @@ function calcAnswer() {
     userTries.innerHTML = attempts;
   }
 }
+
+// ***************************************************************************************
 
 function showSum() {
   // generate a random number between 1 and 12
@@ -157,16 +267,22 @@ function showSum() {
   firstNum = randomNumber;
 }
 
+// ***************************************************************************************
+
 function generateRandomNumber(num1, num2) {
   return Math.floor(Math.random() * num1) + num2;
 }
 
+// ***************************************************************************************
+
 function timeLimitTest() {
   timer = setInterval(countdown, 1000);
-  gameHeader.innerHTML = "60 second<br>Tables Test";
-
+  gameHeader.innerHTML = "3 Minute<br>Tables Test";
+  progressBar();
   timer2 = setInterval(checkGameStatus, 50);
 }
+
+// ***************************************************************************************
 
 //  game timer countdown
 function countdown() {
@@ -178,10 +294,36 @@ function countdown() {
     clearInterval(timer);
   }
   // show countdown in UI
-  document.getElementById(
-    "timerDisplay"
-  ).innerHTML = `Remaining Time : <span class="remaining-time">${time}</span>`;
+  document.getElementById("timerDisplay").innerHTML =
+    "Remaining Time: " + time + " seconds";
 }
+
+// ***************************************************************************************
+
+function progressBar() {
+  let timedProgressBar = document.getElementById("timedProgressBar");
+  timedProgressBar.style.display = "block";
+  let colouredBar = document.getElementById("colouredBar");
+  let width = 1;
+  let id = setInterval(frame, 1800);
+  function frame() {
+    if (width >= 100) {
+      clearInterval(id);
+      //i = 0;
+    } else {
+      width++;
+      colouredBar.style.width = width + "%";
+      if (width >= 50) {
+        colouredBar.style.backgroundColor = "orange";
+      }
+      if (width >= 80) {
+        colouredBar.style.backgroundColor = "red";
+      }
+    }
+  }
+}
+
+// ***************************************************************************************
 
 // CLEARS INPUT BOX AND GIVES IT FOCUS
 function resetUserInputBox() {
@@ -189,13 +331,16 @@ function resetUserInputBox() {
   document.getElementById("userAnswerTextBox").value = "";
 }
 
-// check if time has run out - show the results
+// ***************************************************************************************
+
 function checkGameStatus() {
   if (!gameRunning && time === 0) {
     showResults();
     clearInterval(timer2);
   }
 }
+
+// ***************************************************************************************
 
 function showResults() {
   // Hide the game screen
@@ -208,7 +353,7 @@ function showResults() {
   header.style.fontFamily = "Permanent Marker";
 
   const amount = document.createElement("h5");
-  amount.textContent = "You Answered " + attempts + " Questions in 60 seconds";
+  amount.textContent = "You Answered a total of " + attempts + " sums";
 
   const correct = document.createElement("h4");
   correct.textContent = "Correct Answers: " + score;
@@ -229,6 +374,36 @@ function showResults() {
   menuButton.classList = "btn btn-dark btn-block backToMenuBtn mt-3";
   menuButton.textContent = "Back To Menu";
 
+  /************************************************************************
+   ************************************************************************** */
+
+  // create date and time stamp and format for easy reading - e.g 17-Jan-2021:22.14
+  const d = new Date();
+  const ye = new Intl.DateTimeFormat("en-GB", { year: "numeric" }).format(d);
+  const mo = new Intl.DateTimeFormat("en-GB", { month: "short" }).format(d);
+  const da = new Intl.DateTimeFormat("en-GB", { day: "2-digit" }).format(d);
+  const hr = new Intl.DateTimeFormat("en-GB", { hour: "numeric" }).format(d);
+  const min = new Intl.DateTimeFormat("en-GB", { minute: "numeric" }).format(d);
+  const resultDateTime = `${da}-${mo}-${ye}:${hr}:${min}`;
+
+  // create an object containing results
+  const gameResultsForLocalStorage = [
+    {
+      datetime: resultDateTime,
+      answered: attempts,
+      correct: score,
+      wrong: incorrectAnswers,
+      percent: percentToTwoDecimalPlaces,
+      table: numSelect.value
+    }
+  ];
+
+  // save game results data to local storage
+  insert_records(gameResultsForLocalStorage);
+
+  /************************************************************************
+   ************************************************************************** */
+
   // add new elements to container
   const appContainer = document.querySelector("#container");
   appContainer.appendChild(header);
@@ -246,6 +421,8 @@ function showResults() {
     });
   }
 }
+
+// ***************************************************************************************
 
 function testPercentAnimation(userPercent) {
   // start timer - increment every 15th second

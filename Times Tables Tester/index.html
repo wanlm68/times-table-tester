@@ -18,6 +18,8 @@
   <body>
     <div id="container">
       <div id="mainMenu">
+        <textarea id="textAreaResults" style="display: none;"></textarea>
+
         <h1 id="menuHeader" class="line-divide">Times Table Test</h1>
 
         <button id="freeFlowBtn" class="btn btn-dark btn-block">
@@ -29,8 +31,11 @@
         <button id="timedTestBtn" class="btn btn-dark btn-block">
           <span class="font-weight-bold" style="font-size:larger"
             >Timed Test</span
-          ><br />60 Second Time Limit Test
+          ><br />3 Minute Time Limit Test
         </button>
+        <footer>
+          <button id="showSavedResults">created by Mark Wanless</button>
+        </footer>
       </div>
 
       <div id="chooseNumber" style="display: none;">
@@ -61,6 +66,11 @@
         <h1 id="gameHeader" class="line-divide">Free Practise</h1>
 
         <p id="timerDisplay"></p>
+
+        <!-- countdown progress bar-->
+        <div id="timedProgressBar" style="display: none;">
+          <div id="colouredBar"></div>
+        </div>
 
         <div id="sumDisplay">
           <h1 id="sum1">0</h1>

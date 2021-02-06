@@ -1,5 +1,10 @@
 /* Stylesheet */
 
+body {
+  margin: 0;
+  padding: 0;
+}
+
 #container {
   width: 400px;
   margin: 0 auto;
@@ -7,6 +12,15 @@
   padding: 15px;
   text-align: center;
   font-family: "Roboto";
+}
+
+#textAreaResults {
+  position: absolute;
+  top: 10px;
+  left: 0px;
+  width: 400px;
+  height: 230px;
+  font-size: 12px;
 }
 
 #menuHeader,
@@ -32,6 +46,19 @@
 #timerDisplay {
   font-size: 20px;
   font-weight: bold;
+}
+
+#timedProgressBar {
+  margin: 0 auto;
+  width: 80%;
+  background-color: #ddd;
+  display: inline-block;
+}
+
+#colouredBar {
+  width: 1%;
+  height: 20px;
+  background-color: #4caf50;
 }
 
 #sumDisplay {
@@ -86,4 +113,19 @@
   position: relative;
   top: 4px;
   font-size: 1.5em;
+}
+
+footer button {
+  margin: 20px auto 0;
+  font-size: 11px;
+  font-weight: bold;
+  position: relative;
+  top: 12px;
+  border: none;
+  outline: none;
+  background-color: #bfbfbf;
+}
+
+footer button:focus {
+  outline: none;
 }
